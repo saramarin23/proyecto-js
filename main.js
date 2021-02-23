@@ -13,7 +13,7 @@ function getArtistApi(input_val, token) {
       headers: {
         Authorization:
           "Bearer " + 
-          "BQDDdLAqrr7ymY3ev8xRsFCSIRG9-VbxHeBCb1eDzXTdGv0wVOy4p3fJQpZSL8_22_lTDMDEWglkmzkhN85PcV5XhVaSahYsYpGCgrAGWIL0HcjXNi6Bka7i6pKfBfAxHq5jFnOOOPY",
+          "BQCFwEvUFOfzY_8MKogHdLRsDp9_xg0ZPxZRWTIaIiL5Wpv7JYivJbfhu41DJUp0_Cm2pxNtgIrALiAbjRXmUn58RqHKdKZNMRzAsLcZDvBXRjCvlY4QC1pN7clefZKtzA_GMuW68PU",
       },
     }
   )
@@ -30,17 +30,17 @@ function getData(data, input_val ) {
   const artists = [];
   for (const artist in artists_from_spotify) {
     let name = artists_from_spotify[artist].name;
-      if (name.toLowerCase().includes(inputVal.toLowerCase())) {
-        artists.push(artists_from_spotify[artist]);
-      } 
-    }
+    if (name.toLowerCase().includes(inputVal.toLowerCase())) {
+      artists.push(artists_from_spotify[artist]);
+    } 
+  }
   const autocomplete_results = document.getElementById("suggestions");
-    autocomplete_results.innerHTML = "";
+  autocomplete_results.innerHTML = "";
     
-    for (let i = 0; i < artists.length; i++) {
-      console.log(artists);
-      autocomplete_results.innerHTML += "<li>" + artists[i].name + "</li>";
-    }
+  for (let i = 0; i < artists.length; i++) {
+    console.log(artists);
+    autocomplete_results.innerHTML += "<li class='artist-list-search'>" + `<img class="artist-image-search" src=${artists[i].images[2].url} />` + `<p>${artists[i].name}</p>`  + "</li>";
+  }
 }
 
 input.onkeyup = function getArtistInput() {
