@@ -4,57 +4,48 @@ const searchInput = document.getElementById("artist-search");
 
 const input = document.querySelector("input");
 
-function getArtistApi(input_val) {
-  //   console.log(input_val);
-
+function getArtistApi(input_val, token) {
+  console.log(input_val, token);
   fetch(
     `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
     {
       method: "GET",
       headers: {
         Authorization:
-          "Bearer " +
-          "BQDNNgPRU018GGS859TN2JXyNLyHKarXkFuSVyRljQTETxqD1ywrAbLnAa5agMeo46vfKBKn047KN1JTcz5AaneyUkfhwOQ5tdKOcuax8yrv6mUhRsEpiGqeZYKa2FSmd7PIGPj9JhU",
+          "Bearer " + 
+          "BQDDdLAqrr7ymY3ev8xRsFCSIRG9-VbxHeBCb1eDzXTdGv0wVOy4p3fJQpZSL8_22_lTDMDEWglkmzkhN85PcV5XhVaSahYsYpGCgrAGWIL0HcjXNi6Bka7i6pKfBfAxHq5jFnOOOPY",
       },
     }
   )
-    .then((response) => response.json())
+    .then(response => response.json())
     .then((data) => {
-      getData(data);
+      getData(data)
     })
     .catch((err) => console.log("error", err));
 }
 
-function getData(data, input_val) {
+function getData(data, input_val ) {
   const artists_from_spotify = data.artists.items;
-  //   console.log(data.artists);
+  let inputVal = input.value;
   const artists = [];
-  for (let i = 0; i < artists.length; i++) {
-    if (input_val === artists_from_spotify[i].slice(0, input_val.length)) {
-      console.log(artists[i]);
-      artists.push(artists[i]);
+  for (const artist in artists_from_spotify) {
+    let name = artists_from_spotify[artist].name;
+      if (name.toLowerCase().includes(inputVal.toLowerCase())) {
+        artists.push(artists_from_spotify[artist]);
+      } 
     }
-  }
-  return artists;
+  const autocomplete_results = document.getElementById("suggestions");
+    autocomplete_results.innerHTML = "";
+    
+    for (let i = 0; i < artists.length; i++) {
+      console.log(artists);
+      autocomplete_results.innerHTML += "<li>" + artists[i].name + "</li>";
+    }
 }
 
-input.onkeyup = function getArtistInput(e) {
+input.onkeyup = function getArtistInput() {
   const input_val = this.value;
-
   getArtistApi(input_val);
-
-  if (input_val.length > 0) {
-    const artists_to_show = [];
-
-    const autocomplete_results = document.getElementById("suggestions");
-    autocomplete_results.innerHTML = "";
-    artists_to_show = getData(input_val);
-
-    for (let i = 0; i < artists_to_show.length; i++) {
-      autocomplete_results.innerHTML += "<li>" + artists_to_show[i] + "</li>";
-    }
-    // console.log(artists_to_show);
-  }
 };
 
 const APIController = () => {
@@ -91,4 +82,4 @@ function getRecommendations(token) {
     });
 }
 
-searchButton.addEventListener("click", getArtistApi);
+searchButton.addEventListener("click", APIController);
