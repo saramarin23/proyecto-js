@@ -44,3 +44,46 @@ p {
     border-radius: 50%;
     margin-right: 20px;
 }
+
+#selected-artists {
+    padding-left: 0;
+
+}
+
+.selected {
+    display: flex;
+}
+
+.li-selected-artist {
+    display: flex;
+    align-items: center;
+    max-width: 230px;
+    min-width: 200px;
+    background-color: aquamarine;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.img-selected-artist {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    border-radius: 5px;
+}
+
+#recommendations {
+    padding-left: 0;
+}
+
+.li-track-recommended {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.img-track-recommended {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    border-radius: 5px;
+}
