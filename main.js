@@ -2,20 +2,22 @@
 const searchButton = document.getElementById("search_btn");
 const searchInput = document.getElementById("artist-search");
 const input = document.querySelector("input");
+const preview_button = document.querySelector(".play-button")
 
 let artists = []
 let selectedArtists = []
 
-function getArtistApi(input_val, token) {
+
+
+const getArtistApi = async (token, input_val) => {
   console.log(input_val, token);
-  fetch(
+  await fetch(
     `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
     {
       method: "GET",
       headers: {
         Authorization:
-          "Bearer " + 
-          "BQAD6Uh90FUDbMHGIvEnhsMKH6mcypLUj9G1PfK0aCj9ADDC0R96IbPYYMgLtxKiMgGndOOJWW7IP0T-78Xws7Ui3A_p-JAwzuGVALVSt0icUCx9F-kvxhe_auoK-msJkUKZ0P1cCwk",
+        "Bearer " + token.toString()
       },
     }
   )
@@ -26,7 +28,7 @@ function getArtistApi(input_val, token) {
     .catch((err) => console.log("error", err));
 }
 
-function getData(data, input_val ) {
+function getData(data, input_val) {
   const artists_from_spotify = data.artists.items;
   let inputVal = input.value;
   // const artists = [];
@@ -40,16 +42,24 @@ function getData(data, input_val ) {
   autocomplete_results.innerHTML = "";
     
   for (let i = 0; i < artists.length; i++) {
-    console.log(artists);
+    // console.log(artists);
     autocomplete_results.innerHTML += `<li class='artist-list-search' id="${artists[i].id}">` + `<img class="artist-image-search" src=${artists[i].images[2].url}  />` + `<p>${artists[i].name}</p>` + "</li>";
   }
-  listenArtistEvent()
+  listenArtistEvent();
 }
 
-input.onkeyup = function getArtistInput() {
-  const input_val = this.value;
-  getArtistApi(input_val);
-};
+function playPause() {
+  // let preview_button = document.getElementsByClassName("play-button").children[0];
+  console.log("Prueba");
+  // let isPlaying = false;
+  // if (isPlaying) {
+  //   preview_button.pause();
+  // } else {
+  //   preview_button.play()
+  // }
+}
+
+
 
 function listenArtistEvent() {
   const artistsElements = document.querySelectorAll('.artist-list-search');
@@ -103,18 +113,17 @@ function handleSelectedArtist() {
 }
 
 function removeSelectedArtist(ev) {
-  selectedArtists.splice(ev.currentTarget.id, 1);
-  ev.currentTarget.classList.remove("selected-artist");
   console.log(ev.currentTarget);
+  ev.currentTarget.classList.remove("selected-artist");
+  selectedArtists.splice(ev.currentTarget.id, 1);
   paintSelectedArtists();
 }
 
-const APIController = () => {
-  const clientID = "9e55d70dc1034c18abf8b2168b71b60c";
-  const clientSecret = "9169ea0a9f9d47f597b004f77409429a";
-
-  const getToken = async () => {
-    const result = await fetch("https://accounts.spotify.com/api/token", {
+const APIController = async () => {
+    const clientID = "9e55d70dc1034c18abf8b2168b71b60c";
+    const clientSecret = "9169ea0a9f9d47f597b004f77409429a";
+  try {
+    const response = await fetch("https://accounts.spotify.com/api/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -122,21 +131,45 @@ const APIController = () => {
       },
       body: "grant_type=client_credentials",
     });
-    const data = await result.json();
-    const token = data.access_token;
-    // getArtistApi(token);
-    return token;
-  };
-  getToken();
+    // input.onkeyup = 
+    // function() {
+    //   const input_val = this.value;
+    //   getArtistApi(input_val);
+    // }
+    const data = await response.json()
+    // console.log(data);
+    
+    input.onkeyup = await getArtistbyQuery(data.access_token);
+    // getRecommendations(data.access_token);
+    // showRecommendedTracks(data.access_token);
+  }
+  catch(err) {
+    console.log('fetch failed', err);
+  }
+    // .then((response) => response.json()).then(
+    //   (data) => {
+    //     console.log(data.access_token);
+    //     // return data.access_token
+    //   })
+    //  return token;
 };
 
-function getRecommendations(selectedId) {
+function getArtistbyQuery(token) {
+  const input_val = input.value;
+  getArtistApi(token, input_val);
+}
+
+
+function getRecommendations(token, selectedId) {
+  //varios artistas: %2C
+  console.log(token, selectedId);
   fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${selectedId}`, {
     method: "GET",
     headers: {
       Authorization:
           "Bearer " + 
-          "BQAD6Uh90FUDbMHGIvEnhsMKH6mcypLUj9G1PfK0aCj9ADDC0R96IbPYYMgLtxKiMgGndOOJWW7IP0T-78Xws7Ui3A_p-JAwzuGVALVSt0icUCx9F-kvxhe_auoK-msJkUKZ0P1cCwk",
+          ":" + token
+            // "BQCSmjAuUIcep27ZHtppFqNGmGc4letfRnG_Hh-ABnfELfwdtn2w0T9UVKVWhBwYBl3SxhI6bSuhC_SHT0HrucZtysBCQBsbw9ar7WIYG3EWEM2VZjmtUoWZI_gjXUAS0l68HDgFcGc",
     },
   })
     .then((response) => response.json())
@@ -147,15 +180,29 @@ function getRecommendations(selectedId) {
 
   function showRecommendedTracks(data) {
     const tracks = data.tracks;
+    console.log(tracks)
     let htmlCode = `<div class="recommendation-tracks">`;
   for (const track of tracks) {
-    htmlCode += `<li class="li-track-recommended" id="${track.id}">  <img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class?"name-track-recommended">${track.name}</p><p>${track.artists[0].name}</p></div><p>${track.preview_url}</p> <p>${track.duration_ms}</p> </li>`;
+    const ms = track.duration_ms;
+    const track_duration = formatDuration(ms);
+    htmlCode += `<li class="li-track-recommended" id="${track.id}">  <img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class?"name-track-recommended">${track.name}</p><p>${track.artists[0].name}</p></div>
+    <!--<button class="play-button" onClick='
+    playPause()'><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
+    <p>${track_duration}</p> </li>`;
+    if (track.preview_url === null) {
+      htmlCode += '<p>Holi</p>'
+    }
   }
-  htmlCode += '</div>';
+htmlCode += '</div>';
 
-  const suggestedTrack = document.querySelector("#recommendations")
-  suggestedTrack.innerHTML = htmlCode
+const suggestedTrack = document.querySelector("#recommendations")
+suggestedTrack.innerHTML = htmlCode
 }
 
-searchButton.addEventListener("click", APIController);
+function formatDuration(ms) {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = ((ms % 60000) / 1000).toFixed(0);
+  return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+}
 
+setTimeout(await APIController, 5000);
