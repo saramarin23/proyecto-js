@@ -10,7 +10,8 @@ let selectedArtists = []
 
 
 const getArtistApi = async (token, input_val) => {
-  await fetch(
+  // input_val.onChange(
+   await fetch(
     `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
     {
       method: "GET",
@@ -24,7 +25,8 @@ const getArtistApi = async (token, input_val) => {
     .then((data) => {
       getData(data, token)
     })
-    .catch((err) => console.log("error", err));
+    .catch((err) => console.log("error", err))
+    // )
 }
 
 const getData = (data, token) => {
@@ -41,7 +43,7 @@ const getData = (data, token) => {
   autocomplete_results.innerHTML = "";
     
   for (let i = 0; i < artists.length; i++) {
-    autocomplete_results.innerHTML += `<li class='artist-list-search' id="${artists[i].id}">` + `<img class="artist-image-search" src=${artists[i].images[2].url}  />` + `<p>${artists[i].name}</p>` + "</li>";
+    autocomplete_results.innerHTML += `<li class='artist-list-search' id="${artists[i].id}">` + `<img class="artist-image-search" src=${artists[i].images[2].url}  />` + `<p class="artist-name-search">${artists[i].name}</p>` + "</li>";
   }
   listenArtistEvent(token);
 }
@@ -56,8 +58,6 @@ function playPause() {
   //   preview_button.play()
   // }
 }
-
-
 
 const listenArtistEvent = (token) => {
   const artistsElements = document.querySelectorAll('.artist-list-search');
@@ -88,6 +88,7 @@ const handleArtist = (token, ev) => {
   
 const paintSelectedArtists = (token) => {
   let htmlCode = `<div class="selected">`;
+  console.log(selectedArtists)
 
   for (const selectedArtist of selectedArtists) {
     let selectedID = selectedArtist.id;
@@ -99,12 +100,11 @@ const paintSelectedArtists = (token) => {
       selClass = 'selected-artist';
     }
     htmlCode += `<li class="li-selected-artist ${selClass}" id="${selectedArtist.id}"> <img class="img-selected-artist" src=${selectedArtist.images[2].url} /> <p class?"name-selected-artist">${selectedArtist.name}</p> <button class="rmv-artist" type="reset">X</button> </li>`;
-    getRecommendations(selectedID, token);
+    getRecommendations(selectedArtists, token);
   }
   htmlCode += '</div>';
   const listSelected = document.querySelector("#selected-artists")
   listSelected.innerHTML = htmlCode;
-
 }
 
 function handleSelectedArtist() {
@@ -113,6 +113,7 @@ function handleSelectedArtist() {
 
 function removeSelectedArtist(ev) {
   ev.currentTarget.classList.remove("selected-artist");
+  console.log(selectedArtists)
   selectedArtists.splice(ev.currentTarget.id, 1);
   paintSelectedArtists();
 }
@@ -132,7 +133,7 @@ const APIController = async () => {
     const data = await response.json();
     
     input.onkeyup = await getArtistbyQuery(data.access_token);
-    return data;
+    return data.access_token;
   }
   catch(err) {
     console.log('fetch failed', err);
@@ -141,14 +142,20 @@ const APIController = async () => {
 
 const getArtistbyQuery = (token) => {
   const input_val = input.value;
-  getArtistApi(token, input_val);
+  // input.addEventListener('change', function() {
+    getArtistApi(token, input_val)
+    // })
+  ;
 }
 
 
-const getRecommendations = (selectedId, token) => {
-  //varios artistas: %2C
+const getRecommendations = (selectedArtists, token) => {
   let arrayArtists = [];
-  fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${selectedId}`, {
+  selectedArtists.map((artist) => {
+    arrayArtists.push(artist.id)
+  } )
+  let artistsIdsJoined = arrayArtists.join('%2C')
+  fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${artistsIdsJoined}`, {
     method: "GET",
     headers: {
       Authorization:
@@ -167,18 +174,15 @@ const showRecommendedTracks = (data) => {
   for (const track of tracks) {
       const ms = track.duration_ms;
       const track_duration = formatDuration(ms);
-      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class?"name-track-recommended">${track.name}</p><p>${track.artists[0].name}</p></div>
+      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
       <!--<button class="play-button" onClick='
       playPause()'><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
-      <p>${track_duration}</p> </li>`;
-      if (track.preview_url === null) {
-        htmlCode += '<p>Holi</p>'
-      }
+      <p class="duration-track-recommended">${track_duration}</p> </li>`;
     }
   htmlCode += '</div>';
 
-  const suggestedTrack = document.querySelector("#recommendations")
-  suggestedTrack.innerHTML = htmlCode
+  const suggestedTrack = document.querySelector("#recommendations");
+  suggestedTrack.innerHTML = htmlCode;
 }
 
 function formatDuration(ms) {
@@ -187,4 +191,4 @@ function formatDuration(ms) {
   return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
-setTimeout(await APIController, 5000);
+setTimeout(await APIController, 4000);

@@ -1,35 +1,42 @@
 body {
-    background-color: black;
+    background-color: rgba(0, 0, 0, 0.66);
+    font-family: 'Roboto', sans-serif;
+}
+
+h2 {
+    color: rgb(129, 158, 255);
+    font-weight: bold;
 }
 
 #artist-search {
-    width: 300px;
+    width: 100%;
     background: transparent;
     border: 0 none;
     height: 50px;
-    font-size: 30pt;
-    color: wheat;
+    font-size: 20pt;
+    color: rgb(255, 245, 227);
+    border-bottom: 1px solid rgba(64,13,84,.6);
+    border-bottom-color: rgb(255, 229, 124);
 }
 ::placeholder {
-    color: white;
-    /* font-size: 30pt; */
-    font-family: 'Roboto', sans-serif;
+    color: rgba(255, 255, 255, 0.529);
 }
 
-p {
-    color: wheat;
-    font-family: 'Roboto', sans-serif;
+.artist-name-search {
+    color: rgb(255, 184, 53);
+    font-size: 16pt;
+    margin: 0;
 }
 
 #suggestions {
-    width: 310px;
-    background-color: blue;
+    width: 100%;
+    background-color: rgba(0, 123, 255, 0.564);
     padding-left: 0;
     list-style-type: none;
 }
 
 .artist-list-search {
-    padding: 10px;
+    padding: 5px;
     display: flex;
 }
 
@@ -39,15 +46,14 @@ p {
 }
 
 .artist-image-search {
-    width: 50px;
-    height: 50px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     margin-right: 20px;
 }
 
 #selected-artists {
     padding-left: 0;
-
 }
 
 .selected {
@@ -55,11 +61,13 @@ p {
 }
 
 .li-selected-artist {
+    height: 50px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
     max-width: 230px;
     min-width: 200px;
-    background-color: aquamarine;
+    background-color: rgb(25, 174, 255);
     border-radius: 5px;
     margin-right: 10px;
 }
@@ -71,14 +79,21 @@ p {
     border-radius: 5px;
 }
 
+.rmv-artist {
+    margin-right: 10px;
+}
+
 #recommendations {
     padding-left: 0;
 }
 
 .li-track-recommended {
+    width: 600px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid rgba(171, 207, 220, 0.6);
 }
 
 .img-track-recommended {
@@ -88,6 +103,14 @@ p {
     border-radius: 5px;
 }
 
-audio {
-    max-width: 200px;
+.name-track-recommended {
+    color: rgb(156, 194, 250);
+}
+
+.name-artist-recommended {
+   color: rgb(156, 194, 250);
+}
+
+.duration-track-recommended {
+    color: rgb(156, 194, 250);
 }
