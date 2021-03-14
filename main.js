@@ -1,15 +1,15 @@
 /* eslint-disable camelcase */
 const searchButton = document.getElementById("search_btn");
-const searchInput = document.getElementById("artist-search");
 const input = document.querySelector("input");
 const preview_button = document.querySelector(".play-button")
+const autocomplete_results = document.getElementById("suggestions");
 
-let artists = []
 let selectedArtists = []
+let token = 'BQDx-UfaVOHDkBV0-8Zuzzr89M-Nh4G2kKXKSJ0NYToTMkoB4nYggOGMiLmeCNj_NCF2b1e6ZAiUaRZfg8xJDpssofJAJBvvEny3Ig8uB8gE7MLnpALnBWOzB8HobLaPR_i3NEO8xYw';
 
 
-
-const getArtistApi = async (token, input_val) => {
+const getArtistApi = async (input_val) => {
+  console.log(token, input_val)
   // input_val.onChange(
    await fetch(
     `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
@@ -23,7 +23,7 @@ const getArtistApi = async (token, input_val) => {
   )
     .then(response => response.json())
     .then((data) => {
-      getData(data, token)
+      getData(data)
     })
     .catch((err) => console.log("error", err))
     // )
@@ -32,43 +32,36 @@ const getArtistApi = async (token, input_val) => {
 const getData = (data, token) => {
   const artists_from_spotify = data.artists.items;
   let inputVal = input.value;
-  // const artists = [];
+  let artists = [];
+  // console.log(Object.values(artists_from_spotify).map(cat => cat.name));
+  // console.log(Object.values(artists_from_spotify).includes(cat => cat.name.toLowerCase() === inputVal.toLocaleLowerCase()))
   for (const artist in artists_from_spotify) {
-    let name = artists_from_spotify[artist].name;
-    if (name.toLowerCase().includes(inputVal.toLowerCase())) {
+    let artistName = artists_from_spotify[artist].name;
+    if (artistName.toLowerCase().includes(inputVal.toLowerCase())) {
       artists.push(artists_from_spotify[artist]);
-    } 
+    }
   }
-  const autocomplete_results = document.getElementById("suggestions");
+
   autocomplete_results.innerHTML = "";
-    
+  
   for (let i = 0; i < artists.length; i++) {
     autocomplete_results.innerHTML += `<li class='artist-list-search' id="${artists[i].id}">` + `<img class="artist-image-search" src=${artists[i].images[2].url}  />` + `<p class="artist-name-search">${artists[i].name}</p>` + "</li>";
   }
-  listenArtistEvent(token);
+  listenArtistEvent(token, artists);
 }
 
-function playPause() {
-  // let preview_button = document.getElementsByClassName("play-button").children[0];
-  console.log("Prueba");
-  // let isPlaying = false;
-  // if (isPlaying) {
-  //   preview_button.pause();
-  // } else {
-  //   preview_button.play()
-  // }
-}
-
-const listenArtistEvent = (token) => {
+const listenArtistEvent = (token, artists) => {
   const artistsElements = document.querySelectorAll('.artist-list-search');
   for (const favoriteElement of artistsElements) {
     favoriteElement.addEventListener('click', function(){
-      handleArtist(token, this.id);
+      handleArtist(token, this.id, artists);
   } );
   }
 }
 
-const handleArtist = (token, ev) => {
+const handleArtist = (token, ev, artists) => {
+  autocomplete_results.innerHTML = "";
+  input.value = '';
   const selectedCLickedArtist = selectedArtists.find((selectedArtist) => selectedArtist.id === ev);
   
   if (selectedCLickedArtist === undefined) {
@@ -88,7 +81,6 @@ const handleArtist = (token, ev) => {
   
 const paintSelectedArtists = (token) => {
   let htmlCode = `<div class="selected">`;
-  console.log(selectedArtists)
 
   for (const selectedArtist of selectedArtists) {
     let selectedID = selectedArtist.id;
@@ -113,7 +105,6 @@ function handleSelectedArtist() {
 
 function removeSelectedArtist(ev) {
   ev.currentTarget.classList.remove("selected-artist");
-  console.log(selectedArtists)
   selectedArtists.splice(ev.currentTarget.id, 1);
   paintSelectedArtists();
 }
@@ -131,28 +122,30 @@ const APIController = async () => {
       body: "grant_type=client_credentials",
     });
     const data = await response.json();
-    
-    input.onkeyup = await getArtistbyQuery(data.access_token);
-    return data.access_token;
+    let token = data.access_token;
+   await getArtistApi(token);
+    return token;
   }
   catch(err) {
     console.log('fetch failed', err);
   }
 };
 
-const getArtistbyQuery = (token) => {
+// input.onkeyup = await getArtistbyQuery(data.access_token);
+input.onkeyup = function() {
   const input_val = input.value;
+  // APIController()
   // input.addEventListener('change', function() {
-    getArtistApi(token, input_val)
+    getArtistApi(input_val)
     // })
   ;
 }
 
 
-const getRecommendations = (selectedArtists, token) => {
+const getRecommendations = (selectedArtists) => {
   let arrayArtists = [];
   selectedArtists.map((artist) => {
-    arrayArtists.push(artist.id)
+    arrayArtists.push(artist.id);
   } )
   let artistsIdsJoined = arrayArtists.join('%2C')
   fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${artistsIdsJoined}`, {
@@ -175,8 +168,7 @@ const showRecommendedTracks = (data) => {
       const ms = track.duration_ms;
       const track_duration = formatDuration(ms);
       htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
-      <!--<button class="play-button" onClick='
-      playPause()'><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
+      <!--<button class="play-button"><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
       <p class="duration-track-recommended">${track_duration}</p> </li>`;
     }
   htmlCode += '</div>';
@@ -191,4 +183,5 @@ function formatDuration(ms) {
   return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
-setTimeout(await APIController, 4000);
+// setTimeout(APIController, 0);
+// window.onload = APIController
