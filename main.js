@@ -3,38 +3,41 @@ const searchButton = document.getElementById("search_btn");
 const input = document.querySelector("input");
 const preview_button = document.querySelector(".play-button")
 const autocomplete_results = document.getElementById("suggestions");
+const suggestedTrack = document.querySelector("#recommendations");
 
-let selectedArtists = []
-let token = 'BQDx-UfaVOHDkBV0-8Zuzzr89M-Nh4G2kKXKSJ0NYToTMkoB4nYggOGMiLmeCNj_NCF2b1e6ZAiUaRZfg8xJDpssofJAJBvvEny3Ig8uB8gE7MLnpALnBWOzB8HobLaPR_i3NEO8xYw';
+let selectedArtists = [];
+// let token = ''
+let token = 'BQCXdLuV-4P6i_AaHeJHEW8v7mc99f_mjoW5wX6c9DXa7TVymrukcFOLCfVlEdKR4MbxOvaxeVOztB_FdKD0OrPDc6NkcAVJflY1zcyxVlVQm5AYxSj4m-UQFTpnwPoGYdSblwG8ps8';
+
+// const drag = function(ev) {
+//   ev.preventDefault();
+//   console.log('dragStart', ev);
+// }
 
 
 const getArtistApi = async (input_val) => {
-  console.log(token, input_val)
   // input_val.onChange(
-   await fetch(
-    `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
-    {
-      method: "GET",
-      headers: {
-        Authorization:
-        "Bearer " + token.toString()
-      },
-    }
-  )
-    .then(response => response.json())
-    .then((data) => {
-      getData(data)
-    })
-    .catch((err) => console.log("error", err))
-    // )
-}
+      await fetch(
+        `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
+        {
+          method: "GET",
+          headers: {
+            Authorization:
+            "Bearer " + token.toString()
+          },
+        }
+        )
+        .then(response => response.json())
+        .then((data) => {
+          getData(data);
+        })
+        .catch((err) => console.log("error", err));
+      }
 
 const getData = (data, token) => {
   const artists_from_spotify = data.artists.items;
   let inputVal = input.value;
   let artists = [];
-  // console.log(Object.values(artists_from_spotify).map(cat => cat.name));
-  // console.log(Object.values(artists_from_spotify).includes(cat => cat.name.toLowerCase() === inputVal.toLocaleLowerCase()))
   for (const artist in artists_from_spotify) {
     let artistName = artists_from_spotify[artist].name;
     if (artistName.toLowerCase().includes(inputVal.toLowerCase())) {
@@ -54,29 +57,24 @@ const listenArtistEvent = (token, artists) => {
   const artistsElements = document.querySelectorAll('.artist-list-search');
   for (const favoriteElement of artistsElements) {
     favoriteElement.addEventListener('click', function(){
-      handleArtist(token, this.id, artists);
-  } );
+      handleArtist(token, this, artists);
+    });
   }
 }
 
 const handleArtist = (token, ev, artists) => {
   autocomplete_results.innerHTML = "";
   input.value = '';
-  const selectedCLickedArtist = selectedArtists.find((selectedArtist) => selectedArtist.id === ev);
+  const selectedCLickedArtist = selectedArtists.find((selectedArtist) => selectedArtist.id === ev.id);
   
   if (selectedCLickedArtist === undefined) {
-    const clickedArtist = artists.find((artist) => ev === artist.id);
+    const clickedArtist = artists.find((artist) => ev.id === artist.id);
     selectedArtists.push(clickedArtist);
   } else {
-      const filteredSelected = artists.filter((artist) => ev !== artist.id);
+      const filteredSelected = artists.filter((artist) => ev.id !== artist.id);
       artists = filteredSelected;
     }
   paintSelectedArtists(token);
-
-  const removeArtist = document.querySelectorAll(".rmv-artist");
-  for (const removeButton of removeArtist) {
-    removeButton.addEventListener("click", removeSelectedArtist);
-  }
 }
   
 const paintSelectedArtists = (token) => {
@@ -91,22 +89,30 @@ const paintSelectedArtists = (token) => {
     } else {
       selClass = 'selected-artist';
     }
-    htmlCode += `<li class="li-selected-artist ${selClass}" id="${selectedArtist.id}"> <img class="img-selected-artist" src=${selectedArtist.images[2].url} /> <p class?"name-selected-artist">${selectedArtist.name}</p> <button class="rmv-artist" type="reset">X</button> </li>`;
-    getRecommendations(selectedArtists, token);
+    htmlCode += `<li class="li-selected-artist ${selClass}" id="${selectedArtist.id}" draggable="true"> <img class="img-selected-artist" src=${selectedArtist.images[2].url} /> <p class="name-selected-artist">${selectedArtist.name}</p> <button class="rmv-artist" data-index-number='${selectedArtist.id}' type="reset">X</button> </li>`;
+    getRecommendations(selectedArtists);
   }
   htmlCode += '</div>';
-  const listSelected = document.querySelector("#selected-artists")
+  const listSelected = document.querySelector("#selected-artists");
   listSelected.innerHTML = htmlCode;
-}
 
-function handleSelectedArtist() {
-  
+  const removeArtist = document.querySelectorAll(".rmv-artist");
+  for (const removeButton of removeArtist) {
+    removeButton.addEventListener("click", function() {
+      removeSelectedArtist(this);
+      paintSelectedArtists();
+    }) 
+  }
+  listenArtistEvent();
+  setSelectedInLocalStorage();
 }
 
 function removeSelectedArtist(ev) {
-  ev.currentTarget.classList.remove("selected-artist");
-  selectedArtists.splice(ev.currentTarget.id, 1);
+  ev.classList.remove("selected-artist");
+  selectedArtists.splice(ev.dataset.indexNumber, 1);
   paintSelectedArtists();
+  getRecommendations(selectedArtists);
+  listenArtistEvent();
 }
 
 const APIController = async () => {
@@ -144,21 +150,28 @@ input.onkeyup = function() {
 
 const getRecommendations = (selectedArtists) => {
   let arrayArtists = [];
+  console.log(selectedArtists);
   selectedArtists.map((artist) => {
     arrayArtists.push(artist.id);
-  } )
-  let artistsIdsJoined = arrayArtists.join('%2C')
-  fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${artistsIdsJoined}`, {
-    method: "GET",
-    headers: {
-      Authorization:
-          "Bearer " + token
-    },
   })
+
+  let artistsIdsJoined = arrayArtists.join('%2C');
+  if (selectedArtists.length > 0) {
+    fetch(`https://api.spotify.com/v1/recommendations?limit=25&market=ES&min_popularity=50&max_popularity=100&seed_artists=${artistsIdsJoined}`, {
+      method: "GET",
+      headers: {
+        Authorization:
+        "Bearer " + token
+      },
+    })
     .then((response) => response.json())
     .then((data) => {
       showRecommendedTracks(data);
     });
+  } else {
+    suggestedTrack.innerHTML = "";
+    return null;
+  }
 }
 
 const showRecommendedTracks = (data) => {
@@ -172,8 +185,6 @@ const showRecommendedTracks = (data) => {
       <p class="duration-track-recommended">${track_duration}</p> </li>`;
     }
   htmlCode += '</div>';
-
-  const suggestedTrack = document.querySelector("#recommendations");
   suggestedTrack.innerHTML = htmlCode;
 }
 
@@ -183,5 +194,23 @@ function formatDuration(ms) {
   return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
+function setSelectedInLocalStorage() {
+  localStorage.setItem("Selected artists", JSON.stringify(selectedArtists));
+}
+
+// function getFavoritesFromLocalStorage() {
+//   return JSON.parse(localStorage.getItem("Selected artists"));
+// }
+
+function startApp() {
+  let localSelected = JSON.parse(localStorage.getItem("Selected artists"));
+  if (localSelected !== null) {
+    selectedArtists = localSelected;
+    paintSelectedArtists();
+  }
+}
+
+startApp();
+
 // setTimeout(APIController, 0);
-// window.onload = APIController
+// window.onload = APIController()
