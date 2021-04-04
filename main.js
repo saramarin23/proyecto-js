@@ -6,17 +6,9 @@ const autocomplete_results = document.getElementById("suggestions");
 const suggestedTrack = document.querySelector("#recommendations");
 
 let selectedArtists = [];
-// let token = ''
-let token = 'BQCXdLuV-4P6i_AaHeJHEW8v7mc99f_mjoW5wX6c9DXa7TVymrukcFOLCfVlEdKR4MbxOvaxeVOztB_FdKD0OrPDc6NkcAVJflY1zcyxVlVQm5AYxSj4m-UQFTpnwPoGYdSblwG8ps8';
-
-// const drag = function(ev) {
-//   ev.preventDefault();
-//   console.log('dragStart', ev);
-// }
-
+let token = '';
 
 const getArtistApi = async (input_val) => {
-  // input_val.onChange(
       await fetch(
         `https://api.spotify.com/v1/search?q=${input_val}&type=artist&limit=5`,
         {
@@ -74,7 +66,7 @@ const handleArtist = (token, ev, artists) => {
       const filteredSelected = artists.filter((artist) => ev.id !== artist.id);
       artists = filteredSelected;
     }
-  paintSelectedArtists(token);
+  paintSelectedArtists();
 }
   
 const paintSelectedArtists = (token) => {
@@ -128,7 +120,7 @@ const APIController = async () => {
       body: "grant_type=client_credentials",
     });
     const data = await response.json();
-    let token = data.access_token;
+    token = data.access_token;
    await getArtistApi(token);
     return token;
   }
@@ -137,20 +129,27 @@ const APIController = async () => {
   }
 };
 
-// input.onkeyup = await getArtistbyQuery(data.access_token);
-input.onkeyup = function() {
-  const input_val = input.value;
-  // APIController()
-  // input.addEventListener('change', function() {
-    getArtistApi(input_val)
-    // })
-  ;
+function debouncer(delay, fn) {
+  let temporizador;
+  return function (...args) {
+    if (temporizador) {
+      clearTimeout(temporizador);
+    }
+    temporizador = setTimeout(() => {
+      fn(...args);
+      temporizador = null;
+    }, delay);
+  }
 }
 
+input.onkeyup =  debouncer(1000, function() {
+  const input_val = input.value;
+    getArtistApi(input_val)
+  ;
+})
 
 const getRecommendations = (selectedArtists) => {
   let arrayArtists = [];
-  console.log(selectedArtists);
   selectedArtists.map((artist) => {
     arrayArtists.push(artist.id);
   })
@@ -174,19 +173,31 @@ const getRecommendations = (selectedArtists) => {
   }
 }
 
+const imageObserver = new IntersectionObserver((entries, imageObserver) => {
+  entries.forEach((entry) => {
+    const lazyImage = entry.target;
+    console.log("lazy loading ", lazyImage.dataset.src);
+    lazyImage.src = lazyImage.dataset.src;
+  })
+}, {rootMargin: "0px 0px -50px 0px"});
+
+
 const showRecommendedTracks = (data) => {
   const tracks = data.tracks;
   let htmlCode = `<div class="recommendation-tracks">`;
   for (const track of tracks) {
       const ms = track.duration_ms;
       const track_duration = formatDuration(ms);
-      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
+      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src="logo.png" data-src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
       <!--<button class="play-button"><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
       <p class="duration-track-recommended">${track_duration}</p> </li>`;
     }
   htmlCode += '</div>';
   suggestedTrack.innerHTML = htmlCode;
+  document.querySelectorAll('.img-track-recommended').forEach(img => { 
+    imageObserver.observe(img)});
 }
+
 
 function formatDuration(ms) {
   const minutes = Math.floor(ms / 60000);
@@ -194,13 +205,10 @@ function formatDuration(ms) {
   return minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
 }
 
+
 function setSelectedInLocalStorage() {
   localStorage.setItem("Selected artists", JSON.stringify(selectedArtists));
 }
-
-// function getFavoritesFromLocalStorage() {
-//   return JSON.parse(localStorage.getItem("Selected artists"));
-// }
 
 function startApp() {
   let localSelected = JSON.parse(localStorage.getItem("Selected artists"));
@@ -210,7 +218,8 @@ function startApp() {
   }
 }
 
-startApp();
-
-// setTimeout(APIController, 0);
-// window.onload = APIController()
+setInterval(APIController, 60*60*1000);
+window.addEventListener('load', async() => {
+  await APIController();
+  startApp();
+});
