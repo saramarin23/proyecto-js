@@ -188,7 +188,7 @@ const showRecommendedTracks = (data) => {
   for (const track of tracks) {
       const ms = track.duration_ms;
       const track_duration = formatDuration(ms);
-      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src="logo.png" data-src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
+      htmlCode += `<li class="li-track-recommended" id="${track.id}">  <div><img class="img-track-recommended" src="./assets/logo.png" data-src=${track.album.images[2].url} /><div> <p class="name-track-recommended">${track.name}</p><p class="name-artist-recommended">${track.artists[0].name}</p></div></div>
       <!--<button class="play-button"><audio class="audioclass"src=${track.preview_url}></audio>Preview</button> -->
       <p class="duration-track-recommended">${track_duration}</p> </li>`;
     }
